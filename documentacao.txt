@@ -1,0 +1,170 @@
+Documentação do Sistema de Reserva de Mesas para Restaurante
+1. Introdução
+Este projeto foi desenvolvido para gerenciar as reservas de mesas de um restaurante, permitindo aos usuários fazerem reservas online com base na disponibilidade das mesas. O sistema possui funcionalidades como login, criação de reservas, visualização de reservas feitas, e validação de horários para evitar conflitos.
+
+Objetivo
+Permitir que clientes possam reservar mesas de um restaurante através de um sistema online.
+
+2. Tecnologias Utilizadas
+Laravel 10.x - Framework PHP para desenvolvimento web.
+MySQL - Sistema de gerenciamento de banco de dados relacional.
+Bootstrap - Framework CSS para design responsivo.
+PHP 8.x - Linguagem de programação utilizada para o backend.
+Composer - Gerenciador de dependências PHP.
+3. Estrutura do Projeto
+A estrutura do projeto segue o padrão padrão do Laravel, com arquivos organizados da seguinte forma:
+
+markdown
+Copiar código
+app/
+  └── Http/
+      └── Controllers/
+          └── ReservaController.php
+      └── Middleware/
+      └── Requests/
+
+database/
+  └── migrations/
+      └── xxxx_xx_xx_create_mesas_table.php
+      └── xxxx_xx_xx_create_reservas_table.php
+  └── seeders/
+
+public/
+  └── css/
+  └── js/
+
+resources/
+  └── views/
+      └── reservas/
+          └── index.blade.php
+          └── create.blade.php
+          └── show.blade.php
+  └── lang/
+  └── views/
+
+routes/
+  └── web.php
+4. Funcionalidades
+4.1. Cadastro e Login
+Cadastro de usuários: Permite que novos usuários se registrem para usar o sistema de reservas.
+Login: Permite que usuários registrados façam login para acessar a área de reservas.
+Autenticação: O sistema utiliza o Laravel Passport ou o sistema de autenticação padrão para gerenciar sessões de usuário.
+4.2. Reservas
+Criar uma reserva: O usuário pode fazer uma reserva de mesa entre 18:00 e 23:59, exceto aos domingos. O horário das reservas é validado para evitar conflitos com reservas existentes.
+
+Visualizar reservas: O usuário pode visualizar suas reservas feitas anteriormente, incluindo a mesa e o horário da reserva.
+
+Verificar disponibilidade: O sistema valida se a mesa está disponível para a data e hora solicitadas.
+
+4.3. Validações
+Horário de reservas: A reserva só pode ser feita entre 18:00 e 23:59 de segunda a sábado. Não é possível realizar reservas aos domingos.
+
+Conflito de horário: O sistema verifica se já existe uma reserva para o mesmo horário e mesa. Caso exista, o sistema impede a criação da nova reserva.
+
+5. Banco de Dados
+O banco de dados utilizado é MySQL, com as seguintes tabelas principais:
+
+5.1. Tabela mesas
+Armazena as informações sobre as mesas disponíveis no restaurante.
+
+sql
+Copiar código
+CREATE TABLE mesas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    numero INT NOT NULL,
+    capacidade INT NOT NULL
+);
+Campos:
+
+id: Identificador único da mesa.
+numero: Número da mesa.
+capacidade: Número máximo de pessoas que a mesa pode acomodar.
+5.2. Tabela reservas
+Armazena as informações sobre as reservas feitas pelos usuários.
+
+sql
+Copiar código
+CREATE TABLE reservas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    mesa_id INT NOT NULL,
+    data_reserva DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (mesa_id) REFERENCES mesas(id)
+);
+Campos:
+
+id: Identificador único da reserva.
+user_id: Referência ao usuário que fez a reserva.
+mesa_id: Referência à mesa reservada.
+data_reserva: Data e hora da reserva.
+5.3. Relacionamentos
+Um usuário pode ter várias reservas.
+Uma mesa pode ter várias reservas, mas não pode ter mais de uma reserva para o mesmo horário.
+6. Rotas
+As rotas principais do sistema são definidas no arquivo routes/web.php.
+
+6.1. Rota para a página inicial
+php
+Copiar código
+Route::get('/', function () {
+    return view('welcome');
+});
+6.2. Rota para a visualização de reservas
+php
+Copiar código
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reservas', [ReservaController::class, 'index'])->name('reservas.index');
+    Route::get('/reservas/create', [ReservaController::class, 'create'])->name('reservas.create');
+    Route::post('/reservas', [ReservaController::class, 'store'])->name('reservas.store');
+    Route::get('/reservas/{id}', [ReservaController::class, 'show'])->name('reservas.show');
+});
+6.3. Funcionalidades
+GET /reservas: Exibe todas as reservas do usuário.
+GET /reservas/create: Formulário para criar uma nova reserva.
+POST /reservas: Cria uma nova reserva.
+GET /reservas/{id}: Exibe os detalhes de uma reserva específica.
+7. Seeders
+A tabela mesas e a tabela reservas podem ser populadas com dados fictícios para fins de teste usando seeders.
+
+7.1. Seeder de Mesas
+Arquivo: database/seeders/MesasSeeder.php
+
+php
+Copiar código
+public function run()
+{
+    \App\Models\Mesa::create(['numero' => 1, 'capacidade' => 4]);
+    \App\Models\Mesa::create(['numero' => 2, 'capacidade' => 2]);
+    \App\Models\Mesa::create(['numero' => 3, 'capacidade' => 6]);
+    // Adicione mais mesas conforme necessário
+}
+7.2. Seeder de Reservas
+Arquivo: database/seeders/ReservasSeeder.php
+
+php
+Copiar código
+public function run()
+{
+    \App\Models\Reserva::create([
+        'user_id' => 1,
+        'mesa_id' => 1,
+        'data_reserva' => '2024-12-15 19:00:00'
+    ]);
+    \App\Models\Reserva::create([
+        'user_id' => 2,
+        'mesa_id' => 2,
+        'data_reserva' => '2024-12-15 20:00:00'
+    ]);
+    // Adicione mais reservas conforme necessário
+}
+7.3. Executando os Seeders
+Para rodar os seeders e popular o banco de dados com dados fictícios, execute o comando:
+
+bash
+Copiar código
+php artisan migrate --seed
+8. Conclusão
+Esse sistema de reservas de mesas para restaurante oferece uma interface simples e eficiente para que os usuários possam fazer reservas, visualizá-las e garantir que não haja conflitos de horários. As validações são realizadas para garantir que as reservas sigam as regras do restaurante e o banco de dados é mantido consistente.
+
+Se você tiver mais dúvidas ou melhorias a implementar, podemos expandir as funcionalidades ou otimizar o código conforme necessário!
